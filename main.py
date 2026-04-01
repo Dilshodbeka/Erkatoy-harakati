@@ -35,12 +35,12 @@ def _get_sh():
     """Возвращает объект таблицы, переподключается если сессия истекла."""
     global _gc, _sh
     if _gc is None or _sh is None:
-         if GSA_KEY.strip().startswith('{'):
-            # Парсим JSON и используем service_account_from_dict
+        # Если GSA_KEY начинается с '{' — это JSON-строка из переменной окружения
+        if GSA_KEY and GSA_KEY.strip().startswith('{'):
             credentials_info = json.loads(GSA_KEY)
             _gc = gspread.service_account_from_dict(credentials_info)
         else:
-            # Это путь к файлу (для локального запуска)
+            # Локальный запуск: путь к файлу
             _gc = gspread.service_account(filename=GSA_KEY)
         _sh = _gc.open_by_key(SHEET_ID)
     return _sh
