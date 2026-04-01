@@ -1,8 +1,8 @@
+import json
 import os
 import asyncio
 import gspread
 import time
-import json
 from datetime import datetime
 from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher, types, F
@@ -36,13 +36,20 @@ def _get_sh():
     """Возвращает объект таблицы, переподключается если сессия истекла."""
     global _gc, _sh
     if _gc is None or _sh is None:
-        # Если GSA_KEY начинается с '{' — это JSON-строка из переменной окружения
-        if GSA_KEY and GSA_KEY.strip().startswith('{'):
-            credentials_info = json.loads(GSA_KEY)
-            _gc = gspread.service_account_from_dict(credentials_info)
+        # Если GSA_KEY — это JSON-строка (из Railway env), парсим её
+        if GSA_KEY and isinstance(GSA_KEY, str) and GSA_KEY.strip().startswith('{'):
+            import json
+            try:
+                creds = json.loads(GSA_KEY)
+                _gc = gspread.service_account_from_dict(creds)
+                print("✅ Connected using JSON string from env")
+            except Exception as e:
+                print(f"❌ JSON parse error: {e}")
+                raise
         else:
             # Локальный запуск: путь к файлу
             _gc = gspread.service_account(filename=GSA_KEY)
+            print("✅ Connected using file path")
         _sh = _gc.open_by_key(SHEET_ID)
     return _sh
 
