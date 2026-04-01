@@ -2,6 +2,7 @@ import os
 import asyncio
 import gspread
 import time
+import json
 from datetime import datetime
 from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher, types, F
@@ -9,7 +10,7 @@ from aiogram.filters import CommandStart
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
-import json
+
 
 load_dotenv()
 
