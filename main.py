@@ -36,20 +36,32 @@ def _get_sh():
     """Возвращает объект таблицы, переподключается если сессия истекла."""
     global _gc, _sh
     if _gc is None or _sh is None:
-        # Если GSA_KEY — это JSON-строка (из Railway env), парсим её
-        if GSA_KEY and isinstance(GSA_KEY, str) and GSA_KEY.strip().startswith('{'):
+        if not GSA_KEY:
+            raise ValueError("GSA_KEY environment variable is not set!")
+        
+        # Сначала пробуем распарсить как JSON
+        is_json = False
+        try:
             import json
-            try:
-                creds = json.loads(GSA_KEY)
-                _gc = gspread.service_account_from_dict(creds)
-                print("✅ Connected using JSON string from env")
-            except Exception as e:
-                print(f"❌ JSON parse error: {e}")
-                raise
+            clean_key = GSA_KEY.strip()
+            # Убираем возможные кавычки по краям
+            if (clean_key.startswith('"') and clean_key.endswith('"')) or \
+               (clean_key.startswith("'") and clean_key.endswith("'")):
+                clean_key = clean_key[1:-1]
+            
+            creds = json.loads(clean_key)
+            is_json = True
+        except (json.JSONDecodeError, ValueError):
+            is_json = False
+        
+        if is_json:
+            _gc = gspread.service_account_from_dict(creds)
+            print("✅ Connected using JSON string from env")
         else:
-            # Локальный запуск: путь к файлу
+            # Не JSON — используем как путь к файлу
             _gc = gspread.service_account(filename=GSA_KEY)
             print("✅ Connected using file path")
+        
         _sh = _gc.open_by_key(SHEET_ID)
     return _sh
 
