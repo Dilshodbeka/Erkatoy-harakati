@@ -9,6 +9,7 @@ from aiogram.filters import CommandStart
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
+import json
 
 load_dotenv()
 
@@ -34,7 +35,13 @@ def _get_sh():
     """Возвращает объект таблицы, переподключается если сессия истекла."""
     global _gc, _sh
     if _gc is None or _sh is None:
-        _gc = gspread.service_account(filename=GSA_KEY)
+         if GSA_KEY.strip().startswith('{'):
+            # Парсим JSON и используем service_account_from_dict
+            credentials_info = json.loads(GSA_KEY)
+            _gc = gspread.service_account_from_dict(credentials_info)
+        else:
+            # Это путь к файлу (для локального запуска)
+            _gc = gspread.service_account(filename=GSA_KEY)
         _sh = _gc.open_by_key(SHEET_ID)
     return _sh
 
